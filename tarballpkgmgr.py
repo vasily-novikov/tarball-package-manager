@@ -7,13 +7,17 @@ import heapq
 import pickle
 import argparse
 
+
 class TarInfoCmpWrapper:
     def __init__(self, tarinfo):
         self._tarinfo = tarinfo
+
     def unwrap(self):
         return self._tarinfo
+
     def __cmp__(self, other):
         return cmp(other.unwrap().name, self.unwrap().name)
+
 
 class TarballMembersHeap:
     def __init__(self, tarball_members):
@@ -29,6 +33,7 @@ class TarballMembersHeap:
         res = self._popped
         self._popped = heapq.heappop(self._heap).unwrap() if self._heap else None
         return res
+
 
 def tarball_diff(tarball_members, new_tarball_members):
     members = TarballMembersHeap(tarball_members)
@@ -46,12 +51,11 @@ def tarball_diff(tarball_members, new_tarball_members):
         if 0 == cmpres:
             (m, new_m) = (members.pop(), new_members.pop())
             if m.tobuf() != new_m.tobuf():
-                yield (m, new_m)
+                yield (m,  new_m)
         elif cmpres > 0:
             yield (members.pop(), None)
         else:
             yield (None, new_members.pop())
-
 
 
 def update_tarball(path, root, dbpath):
@@ -81,7 +85,8 @@ def update_tarball(path, root, dbpath):
         print "installing {}...".format(name)
         tarball.extractall(path=root)
     print "OK"
-    pickle.dump(tarball.getmembers(), open(dbfilename,"w"))
+    pickle.dump(tarball.getmembers(), open(dbfilename, "w"))
+
 
 def action_update(args):
     dbpath = get_dbpath(args)
@@ -89,6 +94,7 @@ def action_update(args):
         os.makedirs(dbpath)
     for path in args.tarball:
         update_tarball(path, root=args.root, dbpath=dbpath)
+
 
 def delete_tarball(name, root, dbpath):
     db_fname = get_dbfilename(dbpath, name)
@@ -100,29 +106,35 @@ def delete_tarball(name, root, dbpath):
             os.remove(fname)
     os.remove(db_fname)
 
+
 def action_delete(args):
     for path in args.tarball:
         delete_tarball(os.path.basename(path), root=args.root, dbpath=get_dbpath(args))
+
 
 def action_list(args):
     tarballs = [get_tarballname(f) for f in os.listdir(get_dbpath(args))]
     print "\n".join(sorted(tarballs))
 
+
 def get_dbfilename(dbpath, tarball_name):
     return os.path.join(dbpath, tarball_name + ".info")
+
 
 def get_tarballname(dbfilename):
     if not dbfilename.endswith(".info"):
         raise Exception("not a db file name: '{}'".format(dbfilename))
     return os.path.basename(dbfilename)[:-5]
 
+
 def get_dbpath(args):
     return os.path.join(args.root, ".tarballpkgdb")
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=os.getcwd(),
-            help="root directory, it is current directory by default")
+                        help="root directory, it is current directory by default")
     subparsers = parser.add_subparsers()
 
     parser_update = subparsers.add_parser('update')
@@ -138,6 +150,6 @@ def main():
     args = parser.parse_args()
     args.func(args)
 
-if __name__=="__main__":
-    main()
 
+if __name__ == "__main__":
+    main()
